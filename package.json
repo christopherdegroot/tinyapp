@@ -10,11 +10,17 @@
     "type": "git",
     "url": "git+https://github.com/christopherdegroot/tinyapp.git"
   },
-  "keywords": ["LHL", "tinyapp"],
+  "keywords": [
+    "LHL",
+    "tinyapp"
+  ],
   "author": "Chris De Groot",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/christopherdegroot/tinyapp/issues"
   },
-  "homepage": "https://github.com/christopherdegroot/tinyapp#readme"
+  "homepage": "https://github.com/christopherdegroot/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.17.2"
+  }
 }
