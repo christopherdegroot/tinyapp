@@ -64,6 +64,18 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
+app.post("/urls/:shortURL/delete", (req, res) => {
+  //console.log('*** > logging req.params for incoming delete request', req.params)
+  let deleteKey = req.params.shortURL;
+  // console.log('logging delete key after variable declaration', deleteKey)
+  // console.log(urlDatabase[`${deleteKey}`])
+  // console.log('logging pre-delete', urlDatabase);
+   delete urlDatabase[`${deleteKey}`];
+  //console.log('logging post-delete', urlDatabase);
+
+  res.redirect(`/urls`)
+});
+
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
