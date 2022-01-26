@@ -76,6 +76,23 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.redirect(`/urls`)
 });
 
+app.post("/urls/:id", (req, res) =>{
+  //  console.log(req.params.id);
+  // console.log(req.body);
+  let key = req.params.id;
+  let newLongURL = req.body.longURL;
+  console.log('logging new long URL', newLongURL);
+  console.log('logging key', key);
+
+  console.log('log urlDatabase before update', urlDatabase)
+  
+  urlDatabase[`${key}`] = 'http://www.' + newLongURL;
+  console.log('log urlDatabase after update', urlDatabase)
+
+  res.redirect(`/urls`)
+});
+
+
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
