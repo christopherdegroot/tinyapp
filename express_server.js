@@ -24,6 +24,19 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const users = {
+  "userRandomID": {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  "user2RandomID": {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+};
+
 // HOME PAGE
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -85,6 +98,29 @@ app.post("/urls/:id", (req, res) =>{
   res.redirect(`/urls`);
 });
 
+// GET REGISTER PAGE
+app.get("/register", (req, res) => {
+  res.render('registration')
+});
+
+// POST /REGISTER 
+app.post("/register", (req, res) => {
+  newUserID = generateRandomString(6);
+  newUserEmail = req.body.email;
+  newUserPassword = req.body.password;
+
+  users[`${newUserID}`] = {
+    id: newUserID,
+    email: newUserEmail,
+    password: newUserPassword,
+  }
+  
+  res.cookie('user_id', newUserID);
+  console.log(users);
+
+  res.redirect('/urls')
+});
+
 // LOGIN POST
 app.post("/login", (req, res) => {
   res.cookie('username', req.body.username);
@@ -97,9 +133,9 @@ app.post("/logout", (req, res) => {
   res.redirect(`/urls`);
 });
 
-// HELLO PAGE
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
+// 404 page
+app.get("*", (req, res) => {
+  res.send("<html><body><b>404: Not Found</b></body></html>\n");
 });
 
 
