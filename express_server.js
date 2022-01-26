@@ -18,105 +18,92 @@ let generateRandomString = function() {
   return result;
 };
 
+// DATA
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
+// HOME PAGE
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
 
+// URLS.JSON OF DATABASE
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+// URLS PAGE
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase, username: req.cookies.username};
   res.render("urls_index", templateVars);
 });
 
+// CREATE A NEW URL PAGE
 app.get("/urls/new", (req, res) => {
   const templateVars = {
     username: req.cookies.username,
   };
+
   res.render("urls_new", templateVars);
 });
 
+// POST FOR NEW URL
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
+  //console.log(req.body);
   let keyArray = [];
   keyArray.push(generateRandomString());
   let newKey = keyArray[0];
-
-  // console.log('logging newKey after pushing random string', newKey);
   urlDatabase[newKey] = `http://www.${req.body["longURL"]}`,
-  
-  // console.log(urlDatabase)
-  res.redirect(`urls/${newKey}`);         // Respond with 'Ok' (we will replace this)
+  res.redirect(`urls/${newKey}`);
 });
 
+// PAGE FOR A SHORT URL
 app.get("/urls/:shortURL", (req, res) => {
-  // console.log(urlDatabase)
-  // console.log(req.params);
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: req.cookies.username };
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  // console.log('logging req.params', req.params)
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
 });
 
+// POST FOR DELETING URLS
 app.post("/urls/:shortURL/delete", (req, res) => {
-  //console.log('*** > logging req.params for incoming delete request', req.params)
   let deleteKey = req.params.shortURL;
-  // console.log('logging delete key after variable declaration', deleteKey)
-  // console.log(urlDatabase[`${deleteKey}`])
-  // console.log('logging pre-delete', urlDatabase);
-   delete urlDatabase[`${deleteKey}`];
-  //console.log('logging post-delete', urlDatabase);
-
-  res.redirect(`/urls`)
+  delete urlDatabase[`${deleteKey}`];
+  res.redirect(`/urls`);
 });
 
+// POST FOR EDITING URLS
 app.post("/urls/:id", (req, res) =>{
-  //  console.log(req.params.id);
-  // console.log(req.body);
   let key = req.params.id;
   let newLongURL = req.body.longURL;
-  console.log('logging new long URL', newLongURL);
-  console.log('logging key', key);
-
-  console.log('log urlDatabase before update', urlDatabase)
-  
   urlDatabase[`${key}`] = 'http://www.' + newLongURL;
-  console.log('log urlDatabase after update', urlDatabase)
-
-  res.redirect(`/urls`)
+  res.redirect(`/urls`);
 });
 
+// LOGIN POST
 app.post("/login", (req, res) => {
-// console.log(req.params);
-// console.log(req.body.username);
-res.cookie('username', req.body.username);
-res.redirect(`/urls`)
+  res.cookie('username', req.body.username);
+  res.redirect(`/urls`);
 });
 
+// LOGOUT POST
 app.post("/logout", (req, res) => {
-  // console.log('username');
-res.clearCookie('username');
-//console.log(req.cookies);
-
-res.redirect(`/urls`);
+  res.clearCookie('username');
+  res.redirect(`/urls`);
 });
 
-
+// HELLO PAGE
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+
+// LISTEN
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
