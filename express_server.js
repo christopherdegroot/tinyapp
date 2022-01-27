@@ -3,6 +3,8 @@ const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcryptjs');
+
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
 
@@ -146,24 +148,6 @@ app.get("/urls/:url", (req, res) => {
     user_id: req.cookies.user_id, 
     users,
   };
- 
-
-  // shortURL is what is trying to be accessed, if it's NOT in the filtered user database
-  // then do NOT show
-  // let shortURL = req.params.url;
-  // let filteredUrlDatabase = urlsForUser(userID);
-
-  // for (let key in filteredUrlDatabase) {
-  //   if (key !== shortURL) {
-      
-  //   };
-  // };
-
-  // console.log('logging userID', userID);
-  // console.log('logging shortURL AKA Key', shortURL);
-  // console.log('logging urls for user', urlsForUser(userID));
-
-
 
   if (isLoggedIn(userKey) === true && urlDatabase[`${shortURL}`].userID === userKey) {
     res.render("urls_show", templateVars);
@@ -214,8 +198,9 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   newUserID = generateRandomString(6);
   newUserEmail = req.body.email;
-  newUserPassword = req.body.password;
-
+  newUserPassword = bcrypt.hashSync(req.body.password, 10);
+  // console.log(newUserPassword);
+ 
 
   if (newUserEmail === '' || newUserPassword === '') {
     res.write('Error 400');
@@ -237,7 +222,9 @@ app.post("/register", (req, res) => {
     email: newUserEmail,
     password: newUserPassword,
   };
-  
+
+  // console.log(users);
+
   res.cookie('user_id', newUserID);
   res.redirect('/urls');
 });
@@ -258,12 +245,18 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   let loginEmail = req.body.email;
   let loginPassword = req.body.password;
+  // console.log('logging loginPassword generated from login request', loginPassword);
+  // console.log('logging users to see user info for login request', users);
+
   // if foundCounter is increased by 1 then username and password were matched in loop.
   let foundCounter = 0;
 
 
   for (let user in users) {
-    if (emailLookup(user) === loginEmail && users[`${user}`].password === loginPassword) {
+    // console.log('logging for lookup loop', users[`${user}`].password);
+    // console.log("trying to log the bcrypt compare", bcrypt.compareSync(loginPassword ,users[`${user}`].password));
+    if (emailLookup(user) === loginEmail && bcrypt.compareSync(loginPassword ,users[`${user}`].password)) {
+      console.log('the check is PASSING');
       res.cookie('user_id', users[`${user}`].id);
       foundCounter ++;
     }
