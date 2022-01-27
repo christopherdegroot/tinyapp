@@ -156,16 +156,24 @@ app.get("/login", (req, res) => {
 
 // LOGIN POST
 app.post("/login", (req, res) => {
-
   let loginEmail = req.body.email;
   let loginPassword = req.body.password;
-  console.log('login email', loginEmail);
-  console.log('login password', loginPassword);
+  // if foundCounter is increased by 1 then username and password were matched in loop.
+  let foundCounter = 0;
+
 
   for (let user in users) {
     if (emailLookup(user) === loginEmail && users[`${user}`].password === loginPassword) {
       res.cookie('user_id', users[`${user}`].id);
-    };
+      foundCounter ++;
+    }
+  };
+
+
+  if (foundCounter != 1) {
+    res.write('403: Forbidden')
+    res.end();
+    return;
   };
   
   res.redirect(`/urls`);
