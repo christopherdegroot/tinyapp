@@ -29,23 +29,29 @@ const users = {
   },
 };
 
+
 // DRY FUNCTIONS
-let generateRandomString = function() {
+let generateRandomString = function(length) {
   let result = '';
   let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let charactersLength = characters.length;
-  for (let i = 0; i <= 6; i++) {
+  for (let i = 0; i <= length; i++) {
     result += characters.charAt(Math.floor(Math.random() * charactersLength));
   }
   return result;
 };
 
 let emailLookup = function(user_id) {
-    let userID = user_id;
-    let email = users[`${userID}`].email;
-    return email;
- };
+  let userID = user_id;
+  let email = users[`${userID}`].email;
+  return email;
+};
   
+let isLoggedIn = function (cookies) {
+  if (cookies === undefined) {
+    return false;
+  } else return true;
+};
 
 // HOME PAGE
 app.get("/", (req, res) => {
@@ -59,33 +65,41 @@ app.get("/urls.json", (req, res) => {
 
 // URLS PAGE
 app.get("/urls", (req, res) => {
-  // console.log(req.cookies.user_id)
-  // console.log(users[`${req.cookies.user_id}`].email);
   const templateVars = { urls: urlDatabase, user_id: req.cookies.user_id, users};
   res.render("urls_index", templateVars);
 });
 
-// CREATE A NEW URL PAGE
+// GET /urls/new
 app.get("/urls/new", (req, res) => {
-  const templateVars = {
-    user_id: req.cookies.user_id, users,
-  };
-
-  res.render("urls_new", templateVars);
+  let userID = req.cookies.user_id;
+  if (isLoggedIn(userID) === true) {
+    const templateVars = {
+      user_id: req.cookies.user_id, users,
+    };
+    res.render("urls_new", templateVars);
+  } else 
+  res.redirect(`/login`);
+  res.end();
 });
 
-// POST FOR NEW URL
+// POST /urls
 app.post("/urls", (req, res) => {
-  let keyArray = [];
-  keyArray.push(generateRandomString());
-  let newKey = keyArray[0];
-  urlDatabase[newKey] = `http://www.${req.body["longURL"]}`,
-  res.redirect(`urls/${newKey}`);
+  let userID = req.cookies.user_id;
+  if (isLoggedIn(userID) === true) {
+    let keyArray = [];
+    keyArray.push(generateRandomString(6));
+    let newKey = keyArray[0];
+    urlDatabase[newKey] = `http://www.${req.body["longURL"]}`,
+    res.redirect(`urls/${newKey}`);
+  } else 
+  res.write(`403: Forbidden`);
+  res.end();
+
 });
 
-// PAGE FOR A SHORT URL
+// GET /:shortURL
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user_id: req.cookies.user_id};
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user_id: req.cookies.user_id, users};
   res.render("urls_show", templateVars);
 });
 
@@ -101,20 +115,39 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.redirect(`/urls`);
 });
 
-// POST FOR EDITING URLS
+// POST /urls/:id
 app.post("/urls/:id", (req, res) =>{
+
+
   let key = req.params.id;
   let newLongURL = req.body.longURL;
   urlDatabase[`${key}`] = 'http://www.' + newLongURL;
   res.redirect(`/urls`);
+
+  let userID = req.cookies.user_id;
+  if (isLoggedIn(userID) === true) {
+    let key = req.params.id;
+  let newLongURL = req.body.longURL;
+  urlDatabase[`${key}`] = 'http://www.' + newLongURL;
+  res.redirect(`/urls`);
+  } else 
+  res.redirect(`/login`);
+  res.end();
+
 });
 
 // GET REGISTER PAGE
 app.get("/register", (req, res) => {
-  res.render('registration')
+  let userID = req.cookies.user_id;
+  if (isLoggedIn(userID) === false) {
+    res.render('registration')
+  } else 
+  res.redirect(`/urls`);
+  res.end();
+  return;
 });
 
-// POST /REGISTER 
+// POST /REGISTER
 app.post("/register", (req, res) => {
   newUserID = generateRandomString(6);
   newUserEmail = req.body.email;
@@ -125,32 +158,36 @@ app.post("/register", (req, res) => {
     res.write('Error 400');
     res.end();
     return;
-  };
+  }
 
-   for (let user in users) {
-     let userID = user;
-     if (newUserEmail === emailLookup(userID)) {
-       res.write('Error 400');
-       res.end();
-       return;
-     };
-  };
+  for (let user in users) {
+    let userID = user;
+    if (newUserEmail === emailLookup(userID)) {
+      res.write('Error 400');
+      res.end();
+      return;
+    }
+  }
 
   users[`${newUserID}`] = {
     id: newUserID,
     email: newUserEmail,
     password: newUserPassword,
-  }
+  };
   
   res.cookie('user_id', newUserID);
-  //  console.log(users);
-
-  res.redirect('/urls')
+  res.redirect('/urls');
 });
 
-// LOGIN GET
+// GET /login
 app.get("/login", (req, res) => {
-  res.render('login')
+  let userID = req.cookies.user_id;
+  if (isLoggedIn(userID) === false) {
+    res.render('login')
+  } else 
+  res.redirect(`/urls`);
+  res.end();
+  return;
 });
 
 
@@ -167,14 +204,14 @@ app.post("/login", (req, res) => {
       res.cookie('user_id', users[`${user}`].id);
       foundCounter ++;
     }
-  };
+  }
 
 
-  if (foundCounter != 1) {
-    res.write('403: Forbidden')
+  if (foundCounter !== 1) {
+    res.write('403: Forbidden');
     res.end();
     return;
-  };
+  }
   
   res.redirect(`/urls`);
 });
