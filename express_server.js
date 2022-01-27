@@ -12,9 +12,20 @@ app.set("view engine", "ejs");
 
 // DATA
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+      longURL: "https://www.tsn.ca",
+      userID: "aJ48lW"
+  },
+  i3BoGr: {
+      longURL: "https://www.google.ca",
+      userID: "aJ48lW"
+  }
 };
+
+console.log(urlDatabase.b6UTxQ);
+for (let url in urlDatabase) {
+  console.log(url);
+}
 
 const users = {
   "userRandomID": {
@@ -35,7 +46,7 @@ let generateRandomString = function(length) {
   let result = '';
   let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let charactersLength = characters.length;
-  for (let i = 0; i <= length; i++) {
+  for (let i = 0; i < length; i++) {
     result += characters.charAt(Math.floor(Math.random() * charactersLength));
   }
   return result;
@@ -53,17 +64,7 @@ let isLoggedIn = function (cookies) {
   } else return true;
 };
 
-// HOME PAGE
-app.get("/", (req, res) => {
-  res.send("Hello!");
-});
-
-// URLS.JSON OF DATABASE
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
-
-// URLS PAGE
+// GET /urls
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase, user_id: req.cookies.user_id, users};
   res.render("urls_index", templateVars);
@@ -89,7 +90,8 @@ app.post("/urls", (req, res) => {
     let keyArray = [];
     keyArray.push(generateRandomString(6));
     let newKey = keyArray[0];
-    urlDatabase[newKey] = `http://www.${req.body["longURL"]}`,
+    urlDatabase[newKey] = {longURL: `http://www.${req.body["longURL"]}`, userID},
+    console.log(urlDatabase);
     res.redirect(`urls/${newKey}`);
   } else 
   res.write(`403: Forbidden`);
@@ -98,13 +100,20 @@ app.post("/urls", (req, res) => {
 });
 
 // GET /:shortURL
-app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user_id: req.cookies.user_id, users};
-  res.render("urls_show", templateVars);
+app.get("/urls/:url", (req, res) => {
+  let userID = req.cookies.user_id;
+  if (isLoggedIn(userID) === true) {
+    const templateVars = { shortURL: req.params['url'], longURL: urlDatabase[`${req.params['url']}`]['longURL'], user_id: req.cookies.user_id, users};
+   res.render("urls_show", templateVars);
+  } else 
+  res.write(`403: Forbidden`);
+  res.end();
+  return;
 });
 
+// GET /u/:shortURL
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
+  const longURL = urlDatabase[`${req.params['shortURL']}`]['longURL'];
   res.redirect(longURL);
 });
 
@@ -115,28 +124,9 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.redirect(`/urls`);
 });
 
-// POST /urls/:id
-app.post("/urls/:id", (req, res) =>{
 
 
-  let key = req.params.id;
-  let newLongURL = req.body.longURL;
-  urlDatabase[`${key}`] = 'http://www.' + newLongURL;
-  res.redirect(`/urls`);
-
-  let userID = req.cookies.user_id;
-  if (isLoggedIn(userID) === true) {
-    let key = req.params.id;
-  let newLongURL = req.body.longURL;
-  urlDatabase[`${key}`] = 'http://www.' + newLongURL;
-  res.redirect(`/urls`);
-  } else 
-  res.redirect(`/login`);
-  res.end();
-
-});
-
-// GET REGISTER PAGE
+// GET /register
 app.get("/register", (req, res) => {
   let userID = req.cookies.user_id;
   if (isLoggedIn(userID) === false) {
@@ -147,7 +137,7 @@ app.get("/register", (req, res) => {
   return;
 });
 
-// POST /REGISTER
+// POST /register
 app.post("/register", (req, res) => {
   newUserID = generateRandomString(6);
   newUserEmail = req.body.email;
@@ -191,7 +181,7 @@ app.get("/login", (req, res) => {
 });
 
 
-// LOGIN POST
+// POST /login
 app.post("/login", (req, res) => {
   let loginEmail = req.body.email;
   let loginPassword = req.body.password;
@@ -216,7 +206,7 @@ app.post("/login", (req, res) => {
   res.redirect(`/urls`);
 });
 
-// LOGOUT POST
+// POST /logout
 app.post("/logout", (req, res) => {
   res.clearCookie('user_id');
   res.redirect(`/urls`);
