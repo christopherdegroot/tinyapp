@@ -22,10 +22,6 @@ const urlDatabase = {
   }
 };
 
-console.log(urlDatabase.b6UTxQ);
-for (let url in urlDatabase) {
-  console.log(url);
-}
 
 const users = {
   "userRandomID": {
@@ -64,6 +60,18 @@ let isLoggedIn = function (cookies) {
   } else return true;
 };
 
+// POST /:shortURL
+app.post("/urls/:url", (req, res) => {
+
+  let userID = req.params.url;
+  let newLongURL = req.body['longURL'];
+
+    urlDatabase[userID] = {longURL: `http://www.${newLongURL}`, userID},
+    console.log(urlDatabase);
+    res.redirect(`/urls`);
+    res.end()
+});
+
 // GET /urls
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase, user_id: req.cookies.user_id, users};
@@ -72,6 +80,7 @@ app.get("/urls", (req, res) => {
 
 // GET /urls/new
 app.get("/urls/new", (req, res) => {
+ 
   let userID = req.cookies.user_id;
   if (isLoggedIn(userID) === true) {
     const templateVars = {
@@ -85,6 +94,7 @@ app.get("/urls/new", (req, res) => {
 
 // POST /urls
 app.post("/urls", (req, res) => {
+
   let userID = req.cookies.user_id;
   if (isLoggedIn(userID) === true) {
     let keyArray = [];
@@ -96,8 +106,9 @@ app.post("/urls", (req, res) => {
   } else 
   res.write(`403: Forbidden`);
   res.end();
-
 });
+
+
 
 // GET /:shortURL
 app.get("/urls/:url", (req, res) => {
@@ -113,8 +124,14 @@ app.get("/urls/:url", (req, res) => {
 
 // GET /u/:shortURL
 app.get("/u/:shortURL", (req, res) => {
+  if (urlDatabase[`${req.params.shortURL}`] === undefined) {
+    res.write('404: Not Found');
+    res.end();
+    return;
+  } else {
   const longURL = urlDatabase[`${req.params['shortURL']}`]['longURL'];
   res.redirect(longURL);
+  }
 });
 
 // POST FOR DELETING URLS
