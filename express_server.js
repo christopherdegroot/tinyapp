@@ -11,7 +11,7 @@ const { getUserByEmail } = require('./helpers.js');
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieSession({
   name: 'session',
-  keys: ['Verstappen'],
+  keys: ['Verstappen', 'Hamilton', 'Leclerc'],
   // Cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }));
@@ -68,10 +68,10 @@ let emailLookup = function(user_id) {
 };
 
 //function to check if a user is logged in
-let isLoggedIn = function(cookies) {
-  if (cookies === undefined) {
-    return false;
-  } else return true;
+let isLoggedIn = function(userID) {
+  if (users.hasOwnProperty(userID)) {
+    return true;
+  } else return false;
 };
 
 //function to check what urls in the global database a user has (uses user id as a parameter)
