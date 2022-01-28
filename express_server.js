@@ -99,7 +99,6 @@ app.get('/', (req, res)=>{
 
 // POST /:shortURL
 app.post("/urls/:url", (req, res) => {
-
   let userID = req.session.user_id;
   let urlKey = req.params.url;
   let newLongURL = req.body['longURL'];
@@ -142,11 +141,10 @@ app.get("/urls/new", (req, res) => {
 // POST /urls
 app.post("/urls", (req, res) => {
   let userID = req.session.user_id;
-
+  
   if (isLoggedIn(userID) === true) {
-    let keyArray = [];
-    keyArray.push(userID);
-    let newKey = keyArray[0];
+ 
+    let newKey = generateRandomString(6);
     urlDatabase[newKey] = {longURL: `http://www.${req.body["longURL"]}`, userID},
     
     res.redirect(`urls/${newKey}`);
@@ -317,7 +315,6 @@ app.get("*", (req, res) => {
 
 
 // LISTEN ------------------------------------------------------------------------------------------------------------------
-
 app.listen(PORT, () => {
   console.log(`Tinyapp listening on port ${PORT}!`);
 });
