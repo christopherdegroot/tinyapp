@@ -222,7 +222,6 @@ app.post("/register", (req, res) => {
     }
   }
 
-  //
   req.session.user_id = generateRandomString(6);
   const userID = req.session.user_id;
 
