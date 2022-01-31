@@ -5,7 +5,7 @@ const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
-const { getUserByEmail } = require('./helpers.js');
+
 
 //app.use
 app.use(bodyParser.urlencoded({extended: true}));
@@ -47,46 +47,9 @@ const users = {
   },
 };
 
-// DRY FUNCTIONS -------------------------------------------------------------------------------------------------------------
+// DRY FUNCTIONS/REQUIRES --------------------------------------------------------------------------------------------------------
 
-//function to generate random string
-let generateRandomString = function(length) {
-  let result = '';
-  let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let charactersLength = characters.length;
-  for (let i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-  return result;
-};
-
-//function to lookup a user's email through their user ID
-let emailLookup = function(user_id) {
-  let userID = user_id;
-  let email = users[`${userID}`].email;
-  return email;
-};
-
-//function to check if a user is logged in
-let isLoggedIn = function(userID) {
-  if (users.hasOwnProperty(userID)) {
-    return true;
-  } else return false;
-};
-
-//function to check what urls in the global database a user has (uses user id as a parameter)
-let urlsForUser = function(id) {
-  let filteredUrlDatabase = {};
-  for (let key in urlDatabase) {
-    if (urlDatabase[`${key}`].userID === id) {
-      filteredUrlDatabase[`${key}`] = {
-        longURL: urlDatabase[`${key}`].longURL,
-        userID: urlDatabase[`${key}`].userID
-      };
-    };
-  };
-  return filteredUrlDatabase;
-};
+const { getUserByEmail, generateRandomString, emailLookup, isLoggedIn, urlsForUser } = require('./helpers.js');
 
 // HTTP REQUESTs -------------------------------------------------------------------------------------------------------------
 
@@ -112,10 +75,10 @@ app.post("/urls/:url", (req, res) => {
 // GET /urls
 app.get("/urls", (req, res) => {
   let userID = req.session.user_id;
-  let templateVars = { urls: urlsForUser(userID), user_id: req.session.user_id, users};
+  let templateVars = { urls: urlsForUser(userID, urlDatabase), user_id: req.session.user_id, users};
 
   // checking if a user is logged in, if not it will show a view that tells them a relevant error code and links to register/login
-  if (isLoggedIn(userID) === true) {
+  if (isLoggedIn(userID, users) === true) {
     res.render("urls_index", templateVars);
   } else {
     res.render("urls_noshow", templateVars);
@@ -127,7 +90,7 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   let userID = req.session.user_id;
   
-  if (isLoggedIn(userID) === true) {
+  if (isLoggedIn(userID, users) === true) {
     const templateVars = {
       user_id: req.session.user_id, users,
     };
@@ -142,7 +105,7 @@ app.get("/urls/new", (req, res) => {
 app.post("/urls", (req, res) => {
   let userID = req.session.user_id;
   
-  if (isLoggedIn(userID) === true) {
+  if (isLoggedIn(userID, users) === true) {
  
     let newKey = generateRandomString(6);
     urlDatabase[newKey] = {longURL: `http://www.${req.body["longURL"]}`, userID},
@@ -173,7 +136,7 @@ app.get("/urls/:url", (req, res) => {
       users,
     };
 
-    if (isLoggedIn(userKey) === true && urlDatabase[`${shortURL}`].userID === userKey) {
+    if (isLoggedIn(userKey, users) === true && urlDatabase[`${shortURL}`].userID === userKey) {
       res.render("urls_show", templateVars);
     } else {
       res.render("urls_shortnoshow", templateVars);
@@ -217,8 +180,8 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.get("/register", (req, res) => {
 
   let userID = req.body;
-  let templateVars = { urls: urlsForUser(userID), user_id: req.session.user_id, users};
-  if (isLoggedIn(userID) === false) {
+  let templateVars = { urls: urlsForUser(userID, urlDatabase), user_id: req.session.user_id, users};
+  if (isLoggedIn(userID, users) === false) {
     res.render('registration', templateVars);
   } else
     res.redirect(`/urls`);
@@ -238,10 +201,10 @@ app.post("/register", (req, res) => {
     return;
   };
 
-  //checking if user already exists in database
+  //checking if user already exists in database, if they exist returns error 400
   for (let user in users) {
     let userID = user;
-    if (newUserEmail === emailLookup(userID)) {
+    if (newUserEmail === emailLookup(userID, users)) {
       res.write('<h1>Error 400: Bad Request</h1><h2>User already exists</h2>');
       res.end();
       return;
@@ -266,7 +229,7 @@ app.get("/login", (req, res) => {
   let userID = req.session.user_id;
   let templateVars = { urls: urlsForUser(userID), user_id: req.session.user_id, users};
  
-  if (isLoggedIn(userID) === false) {
+  if (isLoggedIn(userID, users) === false) {
     res.render('login', templateVars);
   } else
     res.redirect(`/urls`);
@@ -279,22 +242,13 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   let loginEmail = req.body.email;
   let loginPassword = req.body.password;
-
-  // if foundCounter is increased by 1 then username and password were matched in loop.
-  let foundCounter = 0;
+  const userID = req.session.user_id
 
   //looping through users and comparing database vs. inputted info of BOTH email and password to ensure both match
   for (let user in users) {
-    if (emailLookup(user) === loginEmail && bcrypt.compareSync(loginPassword ,users[`${user}`].password)) {
+    if (emailLookup(user, users) === loginEmail && bcrypt.compareSync(loginPassword ,users[`${user}`].password)) {
       req.session.user_id = users[`${user}`].id;
-      foundCounter ++;
-    };
-  };
-  // if foundcounter never incremented (that is, went to 1) then will return error 403 code since no match was found in database
-  if (foundCounter !== 1) {
-    res.write('<h1>403: Invalid login</h1>');
-    res.end();
-    return;
+    } 
   };
   res.redirect(`/urls`);
 });
