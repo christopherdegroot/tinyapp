@@ -8,9 +8,9 @@ const getUserByEmail = function(email, database) {
 };
 
 //function to generate random string
-let generateRandomString = function(length) {
+const generateRandomString = function(length) {
   let result = '';
-  let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let charactersLength = characters.length;
   for (let i = 0; i < length; i++) {
     result += characters.charAt(Math.floor(Math.random() * charactersLength));
@@ -19,21 +19,21 @@ let generateRandomString = function(length) {
 };
 
 //function to lookup a user's email through their user ID
-let emailLookup = function(user_id, database) {
-  let userID = user_id;
-  let email = database[`${userID}`].email;
+const emailLookup = function(user_id, database) {
+  const userID = user_id;
+  const email = database[`${userID}`].email;
   return email;
 };
 
 //function to check if a user is logged in
-let isLoggedIn = function(userID, database) {
+const isLoggedIn = function(userID, database) {
   if (database.hasOwnProperty(userID)) {
     return true;
   } else return false;
 };
 
 //function to check what urls in the global database a user has (uses user id as a parameter)
-let urlsForUser = function(id, urlDatabase) {
+const urlsForUser = function(id, urlDatabase) {
   let filteredUrlDatabase = {};
   for (let key in urlDatabase) {
     if (urlDatabase[`${key}`].userID === id) {
