@@ -65,7 +65,12 @@ app.post("/urls/:url", (req, res) => {
   let userID = req.session.user_id;
   let urlKey = req.params.url;
   let newLongURL = req.body['longURL'];
-  urlDatabase[urlKey] = {longURL: `http://www.${newLongURL}`, userID},
+
+  if (newLongURL.includes('http') || newLongURL.includes('https')) {
+    urlDatabase[urlKey] = {longURL: `${newLongURL}`, userID}
+  } else {
+    urlDatabase[urlKey] = {longURL: `http://www.${newLongURL}`, userID}
+  }
 
   res.redirect(`/urls`);
   res.end();
@@ -106,11 +111,16 @@ app.post("/urls", (req, res) => {
   let userID = req.session.user_id;
   
   if (isLoggedIn(userID, users) === true) {
- 
-    let newKey = generateRandomString(6);
-    urlDatabase[newKey] = {longURL: `http://www.${req.body["longURL"]}`, userID},
-    
+     let newKey = generateRandomString(6);
+     if (req.body.longURL.includes('http://') || req.body.longURL.includes('https://') ){ 
+
+      urlDatabase[newKey] = {longURL: `${req.body["longURL"]}`, userID},
+      res.redirect(`urls/${newKey}`);
+
+     } else { 
+       urlDatabase[newKey] = {longURL: `http://www.${req.body["longURL"]}`, userID},
     res.redirect(`urls/${newKey}`);
+     }
   } else
     res.write(`403: Forbidden`);
   res.end();
@@ -244,13 +254,17 @@ app.post("/login", (req, res) => {
   let loginPassword = req.body.password;
   const userID = req.session.user_id
 
-  //looping through users and comparing database vs. inputted info of BOTH email and password to ensure both match
-  for (let user in users) {
-    if (emailLookup(user, users) === loginEmail && bcrypt.compareSync(loginPassword ,users[`${user}`].password)) {
-      req.session.user_id = users[`${user}`].id;
-    } 
-  };
+  // checking if a user trying to access /login page is logged in already, if they are, will skip to res.redirect('/urls')
+  if (isLoggedIn(userID, users) === false) {
+
+    //looping through users and comparing database vs. inputted info of BOTH email and password to ensure both match
+    for (let user in users) {
+      if (emailLookup(user, users) === loginEmail && bcrypt.compareSync(loginPassword ,users[`${user}`].password)) {
+        req.session.user_id = users[`${user}`].id;
+      } 
+  } 
   res.redirect(`/urls`);
+  };
 });
 
 
