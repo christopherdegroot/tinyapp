@@ -215,7 +215,8 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 // GET /register
 app.get("/register", (req, res) => {
-  let userID = req.session.user_id;
+
+  let userID = req.body;
   let templateVars = { urls: urlsForUser(userID), user_id: req.session.user_id, users};
   if (isLoggedIn(userID) === false) {
     res.render('registration', templateVars);
@@ -227,11 +228,11 @@ app.get("/register", (req, res) => {
 
 // POST /register
 app.post("/register", (req, res) => {
-  newUserEmail = req.body.email;
-  newUserPassword = bcrypt.hashSync(req.body.password, 10);
+  const newUserEmail = req.body.email;
+  const newUserPassword = bcrypt.hashSync(req.body.password, 10);
 
   // checking if form is empty, if it is returns error 400
-  if (newUserEmail === '' || newUserPassword === '') {
+  if (req.body.email === '' || req.body.password === '') {
     res.write('<h1>Error 400: Bad Request</h1><h2>Empty Request</h2>');
     res.end();
     return;
