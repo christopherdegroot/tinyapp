@@ -1,7 +1,6 @@
 //function to get a user by their email address
 const getUserByEmail = function(email, database) {
   for (let key in database) {
-    // console.log(database[`${key}`].email)
     if (database[`${key}`].email === email) {
       return (database[`${key}`].id)
     };
