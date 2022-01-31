@@ -62,14 +62,14 @@ app.get('/', (req, res)=>{
 
 // POST /:shortURL
 app.post("/urls/:url", (req, res) => {
-  let userID = req.session.user_id;
-  let urlKey = req.params.url;
-  let newLongURL = req.body['longURL'];
+  const userID = req.session.user_id;
+  const urlKey = req.params.url;
+  const newLongURL = req.body['longURL'];
 
   if (newLongURL.includes('http') || newLongURL.includes('https')) {
-    urlDatabase[urlKey] = {longURL: `${newLongURL}`, userID}
+    urlDatabase[urlKey] = {longURL: `${newLongURL}`, userID};
   } else {
-    urlDatabase[urlKey] = {longURL: `http://www.${newLongURL}`, userID}
+    urlDatabase[urlKey] = {longURL: `http://www.${newLongURL}`, userID};
   }
 
   res.redirect(`/urls`);
@@ -79,21 +79,21 @@ app.post("/urls/:url", (req, res) => {
 
 // GET /urls
 app.get("/urls", (req, res) => {
-  let userID = req.session.user_id;
-  let templateVars = { urls: urlsForUser(userID, urlDatabase), user_id: req.session.user_id, users};
+  const userID = req.session.user_id;
+  const templateVars = { urls: urlsForUser(userID, urlDatabase), user_id: req.session.user_id, users};
 
   // checking if a user is logged in, if not it will show a view that tells them a relevant error code and links to register/login
   if (isLoggedIn(userID, users) === true) {
     res.render("urls_index", templateVars);
   } else {
     res.render("urls_noshow", templateVars);
-  };
+  }
 });
 
 
 // GET /urls/new
 app.get("/urls/new", (req, res) => {
-  let userID = req.session.user_id;
+  const userID = req.session.user_id;
   
   if (isLoggedIn(userID, users) === true) {
     const templateVars = {
@@ -108,19 +108,19 @@ app.get("/urls/new", (req, res) => {
 
 // POST /urls
 app.post("/urls", (req, res) => {
-  let userID = req.session.user_id;
+  const userID = req.session.user_id;
   
   if (isLoggedIn(userID, users) === true) {
-     let newKey = generateRandomString(6);
-     if (req.body.longURL.includes('http://') || req.body.longURL.includes('https://') ){ 
+    const newKey = generateRandomString(6);
+    if (req.body.longURL.includes('http://') || req.body.longURL.includes('https://')) {
 
       urlDatabase[newKey] = {longURL: `${req.body["longURL"]}`, userID},
       res.redirect(`urls/${newKey}`);
 
-     } else { 
-       urlDatabase[newKey] = {longURL: `http://www.${req.body["longURL"]}`, userID},
-    res.redirect(`urls/${newKey}`);
-     }
+    } else {
+      urlDatabase[newKey] = {longURL: `http://www.${req.body["longURL"]}`, userID},
+      res.redirect(`urls/${newKey}`);
+    }
   } else
     res.write(`403: Forbidden`);
   res.end();
@@ -129,8 +129,8 @@ app.post("/urls", (req, res) => {
 
 // GET /urls/:shortURL
 app.get("/urls/:url", (req, res) => {
-  let userKey = req.session.user_id;
-  let shortURL = req.params.url;
+  const userKey = req.session.user_id;
+  const shortURL = req.params.url;
 
   //checking if link exists in database
   if (urlDatabase[`${shortURL}`] === undefined) {
@@ -150,8 +150,8 @@ app.get("/urls/:url", (req, res) => {
       res.render("urls_show", templateVars);
     } else {
       res.render("urls_shortnoshow", templateVars);
-    };
-  };
+    }
+  }
 });
 
 
@@ -169,9 +169,10 @@ app.get("/u/:shortURL", (req, res) => {
   }
 });
 
+
 // POST /:shortURL/delete
 app.post("/urls/:shortURL/delete", (req, res) => {
-  let deleteKey = req.params.shortURL;
+  const deleteKey = req.params.shortURL;
 
   //checking if the user_id is the same as the userID for that shortURL, if not it won't allow the POST request to delete from the database and return a 401 error
   if (req.session.user_id === urlDatabase[deleteKey].userID) {
@@ -181,16 +182,15 @@ app.post("/urls/:shortURL/delete", (req, res) => {
     res.status(401);
     res.statusMessage = 'Unauthorized';
     res.end('Error Status 401: You do not have permission to delete this URL.');
-  };
+  }
 });
-
 
 
 // GET /register
 app.get("/register", (req, res) => {
 
-  let userID = req.body;
-  let templateVars = { urls: urlsForUser(userID, urlDatabase), user_id: req.session.user_id, users};
+  const userID = req.body;
+  const templateVars = { urls: urlsForUser(userID, urlDatabase), user_id: req.session.user_id, users};
   if (isLoggedIn(userID, users) === false) {
     res.render('registration', templateVars);
   } else
@@ -198,6 +198,7 @@ app.get("/register", (req, res) => {
   res.end();
   return;
 });
+
 
 // POST /register
 app.post("/register", (req, res) => {
@@ -209,20 +210,21 @@ app.post("/register", (req, res) => {
     res.write('<h1>Error 400: Bad Request</h1><h2>Empty Request</h2>');
     res.end();
     return;
-  };
+  }
 
   //checking if user already exists in database, if they exist returns error 400
-  for (let user in users) {
-    let userID = user;
+  for (const user in users) {
+    const userID = user;
     if (newUserEmail === emailLookup(userID, users)) {
       res.write('<h1>Error 400: Bad Request</h1><h2>User already exists</h2>');
       res.end();
       return;
-    };
-  };
+    }
+  }
 
+  //
   req.session.user_id = generateRandomString(6);
-  userID = req.session.user_id;
+  const userID = req.session.user_id;
 
   //updates users database with the new user info from the forms, this will only execute if the above two if statements failed (a good thing!)
   users[`${userID}`] = {
@@ -234,10 +236,11 @@ app.post("/register", (req, res) => {
   res.redirect('/urls');
 });
 
+
 // GET /login
 app.get("/login", (req, res) => {
-  let userID = req.session.user_id;
-  let templateVars = { urls: urlsForUser(userID), user_id: req.session.user_id, users};
+  const userID = req.session.user_id;
+  const templateVars = { urls: urlsForUser(userID), user_id: req.session.user_id, users};
  
   if (isLoggedIn(userID, users) === false) {
     res.render('login', templateVars);
@@ -250,21 +253,21 @@ app.get("/login", (req, res) => {
 
 // POST /login
 app.post("/login", (req, res) => {
-  let loginEmail = req.body.email;
-  let loginPassword = req.body.password;
-  const userID = req.session.user_id
+  const loginEmail = req.body.email;
+  const loginPassword = req.body.password;
+  const userID = req.session.user_id;
 
   // checking if a user trying to access /login page is logged in already, if they are, will skip to res.redirect('/urls')
   if (isLoggedIn(userID, users) === false) {
 
     //looping through users and comparing database vs. inputted info of BOTH email and password to ensure both match
-    for (let user in users) {
+    for (const user in users) {
       if (emailLookup(user, users) === loginEmail && bcrypt.compareSync(loginPassword ,users[`${user}`].password)) {
         req.session.user_id = users[`${user}`].id;
-      } 
-  } 
-  res.redirect(`/urls`);
-  };
+      }
+    }
+    res.redirect(`/urls`);
+  }
 });
 
 
